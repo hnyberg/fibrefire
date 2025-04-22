@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FibreFire Input</title>
+</head>
+<body>
+  <h1>FibreFire Ekonomisk Input</h1>
+  <form id="dataForm">
+    <label>Födelseår: <input type="number" name="birth_year" required value=1986></label><br>
+    <label>Födelsemånad (1–12): <input type="number" name="birth_month" required min="1" max="12" value=3></label><br>
+    <label>Bruttolön (kr): <input type="number" name="pay" value=35000></label><br>
+    <label>Bolån (kr): <input type="number" name="mortgage" value=1308000></label><br>
+    <label>Bolåneränta (%): <input type="number" name="interest" step="0.01" value=3.5></label><br>
+    <label>Amortering (kr/mån): <input type="number" name="mortgage_payoff" value=10000></label><br>
+    <label>Avkastning börsen (%): <input type="number" name="stocks_gain" step="0.01" value=5></label><br>
+    <label>Lån CSN (kr): <input type="number" name="csn" value=108000></label><br>
+    <label>Amortering CSN (kr/mån): <input type="number" name="csn_payoff" value=750></label><br>
+    <label>Mål nödkonto (kr): <input type="number" name="emergency_goal" value=70000></label><br>
+    <label>Nödkonto nu (kr): <input type="number" name="emergency_now" value=12000></label><br>
+    <label>Börsvärde nu (kr): <input type="number" name="stock_savings" value=100000></label><br>
+    <label>Fasta utgifter exkl mat (kr): <input type="number" name="fixed_costs" value=4500></label><br>
+    <label>Hyra: <input type="number" name="rent" value=5000></label><br>
+    <label>Mat-relaterade utgifter (kr): <input type="number" name="food_costs" value=2500></label><br>
+    <label>Splitta avbetalning + fonder 50/50 i stället: <input type="checkbox" name="split_strategy" checked="true" value="true"></label><br>
+
+    <button type="submit">Spara</button>
+  </form>
+
+  <p id="response"></p>
+
+  <script>
+
+    document.getElementById("dataForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target)
+        const jsonData = {};
+        for (const [key, value] of formData.entries()) {
+            jsonData[key] = Number(value);
+        }
+
+        fetch("/api/save", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("response").innerText = "Sparat!"
+            console.log("Svar:", data)
+        });
+    });
+  </script>
+</body>
+</html>
