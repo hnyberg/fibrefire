@@ -1,18 +1,32 @@
 {
-  "birth_year": 1986,
-  "birth_month": 3,
-  "pay": 35000,
-  "mortgage": 1308000,
-  "interest": 3.5,
-  "mortgage_payoff": 10000,
-  "stocks_gain": 5,
-  "csn": 108000,
-  "csn_payoff": 750,
-  "emergency_goal": 70000,
-  "emergency_now": 12000,
-  "stock_savings": 100000,
-  "fixed_costs": 4500,
-  "rent": 5000,
-  "food_costs": 2500,
-  "split_strategy": null
+  "birth": {
+    "year": 1986,
+    "month": 3
+  },
+  "income": {
+    "salary": 35000
+  },
+  "assets": {
+    "emergencyNow": 12000,
+    "emergencyGoal": 70000,
+    "stockSavings": 100000,
+    "stocksGain": 5
+  },
+  "loans": {
+    "mortgage": 1308000,
+    "mortgageRate": 3.5,
+    "csnTotal": 108000
+  },
+  "fixedCosts": {
+    "mustHaves": 9000,
+    "csnPayoff": 750
+  },
+  "spending": {
+    "foodCosts": 3500,
+    "travelCosts": 1500
+  },
+  "payChoices": {
+    "splitStrategy": "true",
+    "amortization": 0
+  }
 }

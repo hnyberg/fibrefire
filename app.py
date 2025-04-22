@@ -6,38 +6,55 @@ import os
 
 app = Flask(__name__)
 
+FINANCE_FILE = "data/finance.json"
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
-@app.route("/api/save", methods=["POST"])
-def save_data():
+@app.route("/load", methods=["GET"])
+def load_data_from_file():
+    if os.path.exists(FINANCE_FILE):
+        with open(FINANCE_FILE, 'r') as file:
+            data = json.load(file)
+        return jsonify(success=True, data=data)
+    return jsonify(success=False, message="No saved data found")
+
+@app.route("/save", methods=["POST"])
+def save_data_to_file():
     data = request.get_json()
 
     #   Spara i JSON-fil
-    with open("data/finance.json", "w") as f:
-        json.dump(data, f, indent=2)
+    with open(FINANCE_FILE, "w") as file:
+        json.dump(data, file, indent=2)
         
     
     #   input data
-    birth_year = data["birth_year"]
-    birth_month = data["birth_month"]
-    pay = data["pay"]
-    mortgage = data["mortgage"]
-    mortgage_rate = data["interest"]
-    mortgage_monthly_payoff = data["mortgage_payoff"]
-    csn_debt = data["csn"]
-    csn_monthly_payoff = data["csn_payoff"]
-    emergency_goal = data["emergency_goal"]
-    emergency_now = data["emergency_now"]
-    stock_savings = data["stock_savings"]
-    stocks_gain = data["stocks_gain"]
-    fixed_costs = data["fixed_costs"]
-    rent = data["rent"]
-    food_costs = data["food_costs"]
-    split_strategy = data.get("split_strategy") == "true"
+    birth_year = data["birth"]["year"]
+    birth_month = data["birth"]["month"]
+    
+    salary = data["income"]["salary"]
+    
+    emergency_now = data["assets"]["emergencyNow"]
+    emergency_goal = data["assets"]["emergencyGoal"]
+    stock_savings = data["assets"]["stockSavings"]
+    stocks_gain = data["assets"]["stocksGain"]
+    
+    mortgage = data["loans"]["mortgage"]
+    mortgage_rate = data["loans"]["mortgageRate"]
+    csn_debt = data["loans"]["csnTotal"]
+    
+    csn_monthly_payoff = data["fixedCosts"]["csnPayoff"]
+    must_haves = data["fixedCosts"]["mustHaves"]
+    
+    food_costs = data["spending"]["foodCosts"]
+    travel_costs = data["spending"]["travelCosts"]
+    
+    mortgage_monthly_payoff = data["payChoices"]["amortization"]
+    split_strategy = data["payChoices"].get("splitStrategy") == "true"
     if not split_strategy:
         split_strategy = "true"
+    
     
     montly_stocks_gain_factor = pow(1 + stocks_gain/100, 1/12)
     
@@ -54,12 +71,11 @@ def save_data():
     while not (emergency_filled_date and mortgage_free_date and csn_free_date and fire_date) and month_counter < 600:
         
         #   Räkna disponibelt belopp samt fire-belopp
-        monthly_cost = fixed_costs + food_costs + rent
-        if not mortgage_free_date:
-            mortgage_cost = (mortgage_rate/100) * mortgage / 12
-            monthly_cost += mortgage_cost
+        monthly_cost = must_haves + food_costs + travel_costs
+        mortgage_cost = (mortgage_rate/100) * mortgage / 12
+        monthly_cost += mortgage_cost
             
-        available = pay - monthly_cost
+        available = salary - monthly_cost
         fire_amount = 25 * monthly_cost * 12
         print(month_counter, fire_amount)
         
@@ -121,7 +137,8 @@ def save_data():
         "fire":{
             "date":fire_date.strftime("%Y-%m"),
             "age":calcAge(birth_year, birth_month, fire_date),
-            "amount":fire_amount
+            "fireAmount":fire_amount,
+            "monthlyCosts":fire_amount/(25*12)
         }
     }
 

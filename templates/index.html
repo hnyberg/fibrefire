@@ -1,28 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>FibreFire Input</title>
 </head>
+
 <body>
   <h1>FibreFire Ekonomisk Input</h1>
   <form id="dataForm">
-    <label>Födelseår: <input type="number" name="birth_year" required value=1986></label><br>
-    <label>Födelsemånad (1–12): <input type="number" name="birth_month" required min="1" max="12" value=3></label><br>
-    <label>Bruttolön (kr): <input type="number" name="pay" value=35000></label><br>
-    <label>Bolån (kr): <input type="number" name="mortgage" value=1308000></label><br>
-    <label>Bolåneränta (%): <input type="number" name="interest" step="0.01" value=3.5></label><br>
-    <label>Amortering (kr/mån): <input type="number" name="mortgage_payoff" value=10000></label><br>
-    <label>Avkastning börsen (%): <input type="number" name="stocks_gain" step="0.01" value=5></label><br>
-    <label>Lån CSN (kr): <input type="number" name="csn" value=108000></label><br>
-    <label>Amortering CSN (kr/mån): <input type="number" name="csn_payoff" value=750></label><br>
-    <label>Mål nödkonto (kr): <input type="number" name="emergency_goal" value=70000></label><br>
-    <label>Nödkonto nu (kr): <input type="number" name="emergency_now" value=12000></label><br>
-    <label>Börsvärde nu (kr): <input type="number" name="stock_savings" value=100000></label><br>
-    <label>Fasta utgifter exkl mat (kr): <input type="number" name="fixed_costs" value=4500></label><br>
-    <label>Hyra: <input type="number" name="rent" value=5000></label><br>
-    <label>Mat-relaterade utgifter (kr): <input type="number" name="food_costs" value=2500></label><br>
-    <label>Splitta avbetalning + fonder 50/50 i stället: <input type="checkbox" name="split_strategy" checked="true" value="true"></label><br>
+    <label>Födelseår: <input type="number" name="birth_year" required></label><br>
+    <label>Födelsemånad (1–12): <input type="number" name="birth_month" required min="1" max="12"></label><br>
+    <label>Bruttolön (kr): <input type="number" name="salary"></label><br>
+    <label>Bolån (kr): <input type="number" name="mortgage"></label><br>
+    <label>Bolåneränta (%): <input type="number" name="mortgage_rate" step="0.01"></label><br>
+    <label>Amortering (kr/mån): <input type="number" name="amortization"></label><br>
+    <label>Avkastning börsen (%): <input type="number" name="stocks_gain" step="0.01"></label><br>
+    <label>Lån CSN (kr): <input type="number" name="csn_total"></label><br>
+    <label>Avbetalning CSN (kr/mån): <input type="number" name="csn_payoff"></label><br>
+    <label>Mål nödkonto (kr): <input type="number" name="emergency_goal"></label><br>
+    <label>Nödkonto nu (kr): <input type="number" name="emergency_now"></label><br>
+    <label>Börsvärde nu (kr): <input type="number" name="stock_savings"></label><br>
+    <label>Fasta utgifter exkl mat (kr): <input type="number" name="must_haves"></label><br>
+    <label>Mat-relaterade utgifter (kr): <input type="number" name="food_costs"></label><br>
+    <label>Resor (kr): <input type="number" name="travel_costs"></label><br>
+    <label>Splitta avbetalning + fonder 50/50 i stället: <input type="checkbox" name="split_strategy" checked="true"></label><br>
 
     <button type="submit">Spara</button>
   </form>
@@ -31,27 +33,93 @@
 
   <script>
 
-    document.getElementById("dataForm").addEventListener("submit", function(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target)
-        const jsonData = {};
-        for (const [key, value] of formData.entries()) {
-            jsonData[key] = Number(value);
-        }
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const response = await fetch("/load");
+        const result = await response.json();
 
-        fetch("/api/save", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(jsonData)
-        })
+        if (result.success && result.data) {
+          const data = result.data;
+
+          // Fyll i alla fält med hjälp av det grupperade JSON-objektet
+          document.querySelector('[name="birth_year"]').value = data.birth?.year || "";
+          document.querySelector('[name="birth_month"]').value = data.birth?.month || "";
+
+          document.querySelector('[name="salary"]').value = data.income?.salary || "";
+
+          document.querySelector('[name="emergency_now"]').value = data.assets?.emergencyNow || "";
+          document.querySelector('[name="emergency_goal"]').value = data.assets?.emergencyGoal || "";
+          document.querySelector('[name="stock_savings"]').value = data.assets?.stockSavings || "";
+          document.querySelector('[name="stocks_gain"]').value = data.assets?.stocksGain || "";
+
+          document.querySelector('[name="mortgage"]').value = data.loans?.mortgage || "";
+          document.querySelector('[name="csn_total"]').value = data.loans?.csnTotal || "";
+          document.querySelector('[name="mortgage_rate"]').value = data.loans?.mortgageRate || "";
+
+          document.querySelector('[name="csn_payoff"]').value = data.fixedCosts?.csnPayoff || "";
+          document.querySelector('[name="must_haves"]').value = data.fixedCosts?.mustHaves || "";
+          
+          document.querySelector('[name="food_costs"]').value = data.spending?.foodCosts || "";
+          document.querySelector('[name="travel_costs"]').value = data.spending?.travelCosts || "";
+          
+          document.querySelector('[name="amortization"]').value = data.variableCosts?.amortization || "";
+          document.querySelector('[name="split_strategy"]').value = data.payChoices?.splitStrategy || "";
+        }
+      } catch (error) {
+        console.error("Kunde inte ladda sparade data:", error);
+      }
+    });
+
+    document.getElementById("dataForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const formData = new FormData(e.target)
+      const jsonData = {
+        "birth": {
+          "year": Number(formData.get("birth_year")),
+          "month": Number(formData.get("birth_month"))
+        },
+        "income": {
+          "salary": Number(formData.get("salary"))
+        },
+        "assets": {
+          "emergencyNow": Number(formData.get("emergency_now")),
+          "emergencyGoal": Number(formData.get("emergency_goal")),
+          "stockSavings": Number(formData.get("stock_savings")),
+          "stocksGain": Number(formData.get("stocks_gain"))
+        },
+        "loans": {
+          "mortgage": Number(formData.get("mortgage")),
+          "mortgageRate": Number(formData.get("mortgage_rate")),
+          "csnTotal": Number(formData.get("csn_total"))
+        },
+        "fixedCosts": {
+          "mustHaves": Number(formData.get("must_haves")),
+          "csnPayoff": Number(formData.get("csn_payoff"))
+        },
+        "spending": {
+          "foodCosts": Number(formData.get("food_costs")),
+          "travelCosts": Number(formData.get("travel_costs"))
+        },
+        "payChoices": {
+          "splitStrategy": formData.get("split_strategy"),
+          "amortization": Number(formData.get("amortization"))
+        }
+      };
+
+      fetch("/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(jsonData)
+      })
         .then(res => res.json())
         .then(data => {
-            document.getElementById("response").innerText = "Sparat!"
-            console.log("Svar:", data)
+          document.getElementById("response").innerText = "Sparat!"
+          console.log("Svar:", data)
         });
     });
   </script>
 </body>
+
 </html>
